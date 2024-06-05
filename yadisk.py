@@ -8,6 +8,7 @@ from io import BytesIO
 
 info_url = 'https://cloud-api.yandex.net/v1/disk/public/resources?'  # инфа о содержимом ссылки
 public_path = 'https://disk.yandex.ru/d/P3n_jwRc83TWCg'  # Сюда публичную ссылку
+# public_path = 'https://disk.yandex.ru/d/BKGdAxdTVuRnNA'  # Сюда публичную ссылку
 
 
 @dataclass
@@ -67,6 +68,7 @@ class YaDisk:
                 print(' return cached file!')
                 return BytesIO(file_data)
 
+        print('download...', end='')
         d_url = file_info.file  # откуда скачиваем
         download_response = requests.get(d_url)
         file_data = download_response.content
@@ -75,7 +77,7 @@ class YaDisk:
             with open(join(cache_dir, filename), 'wb') as f:
                 f.write(file_data)
 
-        print('downloaded!')
+        print('ok!')
         return BytesIO(file_data)
 
     def __download_list(self):
@@ -97,11 +99,12 @@ class YaDisk:
     def prepare_lists(self):
         """ Подготавливает словари информации файлов: по именам и по датам """
         print('Prepare lists')
-        if self.cache and exists(cached_list_name):
-            with open(cached_list_name) as f:
-                self.r_json = loads(f.read())
-        else:
-            self.__download_list()
+        # if self.cache and exists(cached_list_name):
+        #     with open(cached_list_name) as f:
+        #         self.r_json = loads(f.read())
+        # else:
+        #     self.__download_list()
+        self.__download_list()
 
         files = self.files
         dates = self.dates
@@ -125,4 +128,5 @@ if __name__ == '__main__':
         f = random.choice(keys)
         fa = test.get_file(f)
         for record in ArchiveIterator(fa):
-            print(record.length)
+            print(record.rec_headers.get_header('WARC-Target-URI'))
+

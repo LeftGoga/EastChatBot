@@ -35,10 +35,12 @@ req_params = {
 
 
 class YaDisk:
-    def __init__(self, dir_name='/ja', cache=False):
+    def __init__(self, cache=False, use_cached_list=False):
         self.files = {}  # словарь всех файлов
         self.dates = {}  # словарь дат, в каждой дате список файлов.
         self.cache = cache  # используем-ли кэш
+        self.use_cached_list = use_cached_list  # загружать-ли файл с ЯД
+
         self.prepare_lists()  # подготовка к работе
 
     def __check_cache(self, filename):
@@ -99,12 +101,12 @@ class YaDisk:
     def prepare_lists(self):
         """ Подготавливает словари информации файлов: по именам и по датам """
         print('Prepare lists')
-        # if self.cache and exists(cached_list_name):
-        #     with open(cached_list_name) as f:
-        #         self.r_json = loads(f.read())
-        # else:
-        #     self.__download_list()
-        self.__download_list()
+        if self.cache and self.use_cached_list and exists(cached_list_name):
+            with open(cached_list_name) as f:
+                self.r_json = loads(f.read())
+        else:
+            self.__download_list()
+        # self.__download_list()
 
         files = self.files
         dates = self.dates
@@ -120,13 +122,32 @@ class YaDisk:
 
 
 if __name__ == '__main__':
-    import random
+    # import random
     from warcio import ArchiveIterator
-    test = YaDisk(cache=True)
-    keys = list(test.files.keys())
-    for _ in range(3):
-        f = random.choice(keys)
-        fa = test.get_file(f)
-        for record in ArchiveIterator(fa):
-            print(record.rec_headers.get_header('WARC-Target-URI'))
+    import html2text
+
+    test = YaDisk(cache=True, use_cached_list=True)
+    stream = test.get_file('jp.sputniknews.com-2022-05.warc.gz')
+
+    for i, record in enumerate(ArchiveIterator(stream)):  # цикл по отдельным статьям в архиве
+        if record.rec_type == 'response':
+            # uri = record.rec_headers.get_header('WARC-Target-URI')  # ссылка на оригинал
+            ct = record.http_headers.get_header('Content-Type')
+            # тип контента, т.к. могут сохранятся и
+            # изображения в этот файл, и все прочие
+
+            if 'text/html' in ct:  # это html-ка
+                status = record.http_headers.statusline  # статус скачанного
+                if status == '200 OK':  # скачано нормально
+                    html = record.content_stream().read().decode()  # контент преобразуем в текст
+                    clean_html = html2text.html2text(html)  # передаём html преобразователю в текст
+                    print(clean_html)
+
+    # keys = list(test.files.keys())
+    # for _ in range(5):
+    #     f = random.choice(keys)
+    #     fa = test.get_file(f)
+    #     for record in ArchiveIterator(fa):
+    #         record.content_stream()
+    #         print(record.rec_headers.get_header('WARC-Target-URI'))
 

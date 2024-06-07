@@ -1,3 +1,4 @@
+import re
 import requests
 from dataclasses import dataclass
 from urllib.parse import urlencode
@@ -5,9 +6,24 @@ from os.path import exists, isfile, join, abspath, dirname
 from os import makedirs
 from json import dumps, loads
 from io import BytesIO
+import icu
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+handler = logging.FileHandler('DataRead.log')
+handler.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+logger.addHandler(handler)
 
 info_url = 'https://cloud-api.yandex.net/v1/disk/public/resources?'  # инфа о содержимом ссылки
 public_path = 'https://disk.yandex.ru/d/P3n_jwRc83TWCg'  # Сюда публичную ссылку
+
+
 # public_path = 'https://disk.yandex.ru/d/BKGdAxdTVuRnNA'  # Сюда публичную ссылку
 
 
@@ -21,7 +37,8 @@ class FileInfo:
 
 
 cache_dir = join(dirname(abspath(__file__)), 'cache')  # директория "кэша"
-cached_list_name = join(cache_dir, 'list_all.json')  # закэшированная инфа о списке файлов, описание тут: https://yandex.ru/dev/disk-api/doc/ru/reference/meta
+cached_list_name = join(cache_dir,
+                        'list_all.json')  # закэшированная инфа о списке файлов, описание тут: https://yandex.ru/dev/disk-api/doc/ru/reference/meta
 if not exists(cache_dir):
     makedirs(cache_dir)
 
@@ -57,7 +74,7 @@ class YaDisk:
     def get_file(self, filename):
         """Запрашиваем файл. Если есть в кэше берём оттуда, нет, то качаем с сервера.
         Отдаёт файлообразный объект с содержимым файла."""
-        print('Getting file <%s>... '%filename, end='')
+        print('Getting file <%s>... ' % filename, end='')
         file_info: FileInfo = self.files.get(filename, None)
         if not file_info:
             print('not exists!')
@@ -127,27 +144,77 @@ if __name__ == '__main__':
     import html2text
 
     test = YaDisk(cache=True, use_cached_list=True)
-    stream = test.get_file('jp.sputniknews.com-2022-05.warc.gz')
-
+    pattern = r"(\d{4})-(\d{2})"
+    matches = re.findall(pattern, 'www.homify.jp-2023-06.warc.gz')
+    stream = test.get_file('www.homify.jp-2023-06.warc.gz')
+    print(matches)
+    if matches:
+        year, month = matches[0][0], matches[0][1]
+    else:
+        year, month = None, None
+    paper = {
+        'paper_name': 'jp.sputniknews.com-2022-05.warc.gz',
+        'paper_year': year,
+        'paper_month': month,
+        'sections': []
+    }
+    transliterator = icu.Transliterator.createInstance("NFKC",
+                                                       icu.UTransDirection.FORWARD)  # инициализация нормализатора
     for i, record in enumerate(ArchiveIterator(stream)):  # цикл по отдельным статьям в архиве
         if record.rec_type == 'response':
             # uri = record.rec_headers.get_header('WARC-Target-URI')  # ссылка на оригинал
             ct = record.http_headers.get_header('Content-Type')
+            http_content = record.content_stream().read()
             # тип контента, т.к. могут сохранятся и
             # изображения в этот файл, и все прочие
 
+            html_content = ''  # дабы IDE не ругалась, на отсутствие переменной (переменная создаётся в одной ветки условия)
             if 'text/html' in ct:  # это html-ка
                 status = record.http_headers.statusline  # статус скачанного
                 if status == '200 OK':  # скачано нормально
-                    html = record.content_stream().read().decode()  # контент преобразуем в текст
-                    clean_html = html2text.html2text(html)  # передаём html преобразователю в текст
-                    print(clean_html)
+                    text_atr = {
+                        'id': None,
+                        'link': None,
+                        'text': None
+                    }
+                    detector = icu.CharsetDetector()
+                    detector.setText(record.content_stream().read())
+                    result = detector.detect()
+                    encoding = result.getName()
+                    try:
+                        html_content = http_content.decode(encoding)
+                    except UnicodeDecodeError as message:
+                        for alt_encoding in ['utf-8', 'KOI8-R', 'Big5:', 'latin-1', 'windows-1251']:
+                            try:
+                                html_content = http_content.decode(alt_encoding)
+                                break
+                            except UnicodeDecodeError:
+                                pass
+                        else:
+                            logger.info(message)
+                    # html = record.content_stream().read().decode()  # контент преобразуем в текст
+                    clean_html = html2text.html2text(html_content)  # передаём html преобразователю в текст
+                    text_atr['id'] = i
+                    text_atr['link'] = record.rec_headers.get_header('WARC-Target-URI')
+                    text_atr['text'] = normalized_text = transliterator.transliterate(clean_html)
+                    paper['sections'].append(text_atr)
+                    print(text_atr)
+                    print('\n')
+                    print('-----------------------')
+                    print('\n')
 
-    # keys = list(test.files.keys())
-    # for _ in range(5):
-    #     f = random.choice(keys)
-    #     fa = test.get_file(f)
-    #     for record in ArchiveIterator(fa):
-    #         record.content_stream()
-    #         print(record.rec_headers.get_header('WARC-Target-URI'))
+api_key = "AQVN3Dw9cHbH2EdBS0h1X5sojRzlmJ9zfrXQQR1I"
 
+
+def call_api(url, data, api=api_key):
+    headers = {"Authorization": f"Api-Key {api}"}
+    return requests.post(url, json=data, headers=headers).json()
+
+
+response = call_api("https://translate.api.cloud.yandex.net/translate/v2/translate",
+                    {
+                        "targetLanguageCode": "ru",
+                        "texts": [d["text"] for d in paper["sections"]]
+                    })
+
+print(response)

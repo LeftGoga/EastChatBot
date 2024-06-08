@@ -3,43 +3,92 @@ import requests
 
 
 class connector:
-    def __init__(self, api_key, url, tran_list):
+    def __init__(self, api_key, url):
         self.api_key=api_key
         self.url=url
-        self.tran_list = tran_list
         self.return_list=[]
 
-    def make_requests(self):
+
+    def make_requests(self,tran_list:list, lang:str="ja"):
+        """
+        Сам реквест
+        :param tran_list:
+        :return: list of list
+        """
+
+
         i=0
-        length = len(self.tran_list)
-
-        while True:
-
+        length=len(tran_list)
+        flag= False #нужен для одинчных запросов, поднимается когда последний кусок текста переведен
+        while True:# идет пока не переведется весь текст
 
             temp_list = []
 
-            while True:
-                print("i: ",i)
-                temp_list.append(self.tran_list[i])
-                if (i+1<length) & (len(self.tran_list[i])+len(self.tran_list[i+1])<10000):
-                    i+=1
-                else:
-                    print("break")
-                    i+=1
-                    break
+            while True:# идет пока не заполнится один запрос
+                if length==1:
+                    """
+                    Кусок кода есть запрос на одичный перевод
+                    """
+                    if len(tran_list[0])<10_000: #лимит на длину запроса 10к
 
-            print(sum(map(len,temp_list)))
-            response = self.call_api({"sourceLanguageCode": "ja","targetLanguageCode" : "ru","texts" : temp_list})['translations']
-            print(response)
-            if i+1==length:
+                        temp_list.append(tran_list[0])
+                        flag = True
+                        break
+
+                    else:
+                        """
+                        Разбиение на батчи
+                        """
+                        temp_list.append(tran_list[0][:10_000])
+                        tran_list[0]=tran_list[0][10_000:]
+                        break
+
+                else:
+                    """
+                    Код для запроса на перевод списка элементов
+                    """
+                    if len(tran_list[i])<10_000:
+
+                        temp_list.append(tran_list[i])
+                        if i+1<length:#тут я так и не понял, какого хрена надо делать две  отдельные проверки
+                             if (len(tran_list[i])+len(tran_list[i+1])<10000):
+                                i+=1 # Если к запросу еще можно добавить просто инкриментим счетчик->
+                             else:
+                                #-> иначе инкрементим и выходим
+                                i+=1
+                                break
+                        else:
+                            i+=1
+                            break
+                    else:
+                        """
+                        Обрезание слишком больших элементов
+                        """
+                        temp_list.append(tran_list[i][:10_000])
+                        tran_list[i]=tran_list[i][10_000:]
+                        break
+
+            #сам запрос к API
+            response = self.__call_api({"sourceLanguageCode": lang,"targetLanguageCode" : "ru","texts" : temp_list})['translations']
+
+            #Добавление запроса в общий список
+            self.return_list.append([x["text"] for x in response])
+            if (i>=length) | (flag):
+                #весь списко переведен
                 break
 
-            #self.return_list.append([x["text"] for x in response])
 
 
         return self.return_list
 
 
-    def call_api(self, data):
+    def __call_api(self, data:list):
+
+        """
+        Запрос к API транслейта
+        :param data: Текст для переввода
+        :return: json
+        """
+
         headers = {"Authorization": f"Api-Key {self.api_key}"}
         return requests.post(self.url, json=data, headers=headers).json()

@@ -203,7 +203,7 @@ if __name__ == '__main__':
                     print('-----------------------')
                     print('\n')
 
-api_key = "AQVN3Dw9cHbH2EdBS0h1X5sojRzlmJ9zfrXQQR1I"
+api_key = <API KEY>
 
 
 def call_api(url, data, api=api_key):

@@ -203,18 +203,4 @@ if __name__ == '__main__':
                     print('-----------------------')
                     print('\n')
 
-# api_key = "AQVN3Dw9cHbH2EdBS0h1X5sojRzlmJ9zfrXQQR1I"
-#
-#
-# def call_api(url, data, api=api_key):
-#     headers = {"Authorization": f"Api-Key {api}"}
-#     return requests.post(url, json=data, headers=headers).json()
-#
-#
-# response = call_api("https://translate.api.cloud.yandex.net/translate/v2/translate",
-#                     {
-#                         "targetLanguageCode": "ru",
-#                         "texts": [d["text"] for d in paper["sections"]]
-#                     })
-#
-# print(response)
+

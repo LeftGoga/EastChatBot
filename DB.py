@@ -52,7 +52,7 @@ class DB_connector:
         flag = True
         try:
             coll = self.client.get_or_create_collection(collection_name)
-            check = coll.query(query_texts=text)
+            check = coll.query(query_texts=text, n_results = 1)
             print(check)
             if check["distances"][0]!=[]:
                 if checking:

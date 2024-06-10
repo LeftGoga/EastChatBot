@@ -1,5 +1,5 @@
 import chromadb as cdb
-
+import traceback
 import os.path
 
 class DB_connector:
@@ -16,7 +16,7 @@ class DB_connector:
         self.client= None
         self.path = path
         self.collectionList = []
-        self.create_db(self.path)
+        self.create_db()
 
 
     def create_db(self):
@@ -29,27 +29,16 @@ class DB_connector:
         if not os.path.isfile(file):#чекаем если уже файл
 
             try:
-                self.client = cdb.PersistentClient(self.path)
+                self.client = cdb.PersistentClient(self.path,settings=cdb.Settings(allow_reset=True))
             except Exception as e:
                 print(e)
         else:
             print("db already exists")
+            self.client = cdb.PersistentClient(self.path,settings=cdb.Settings(allow_reset=True))
+    def reset_db(self):
+        self.client.reset()
 
-    def create_collection(self, collection_name):
-
-        """
-        Создание коллекции
-
-        :param collection_name:
-        :return:
-        """
-
-        try:
-            coll = self.client.create_collection(collection_name)
-            self.collectionList.append(coll)
-        except Exception as e:
-            print(e)
-    def add_to_collection(self,collection_name,text,metadata, checking=True):
+    def add_to_collection(self,collection_name,text,metadata=None, checking=True, dup_dist=1):
 
         """
         Добавление в коллекцию. Есть чек на дубли
@@ -59,21 +48,44 @@ class DB_connector:
         :param checking:
         :return:
         """
-
+        ids= [str(x) for x in range(len(text))]
         flag = True
         try:
-            coll = self.client.get_collection(collection_name)
-            check = coll.query([text])
-            if checking:
-                for i in check["distances"]:
-                    if i <1:
-                        print("дубликат")
-                        flag = False
-            if flag :
-                coll.add([text],[metadata])
+            coll = self.client.get_or_create_collection(collection_name)
+            check = coll.query(query_texts=text)
+            print(check)
+            if check["distances"][0]!=[]:
+                if checking:
+                    for i in check["distances"]:
+                        if i[0] < dup_dist:
+                            print("дубликат")
+                            flag = False
+                            break
+            if flag:
+                print("adding")
+                coll.add(ids=ids,documents=text, metadatas = metadata)
         except Exception as e:
-            print(e)
+            tb = traceback.format_exc()
+            print(tb)
+            # print("in add:", e)
+
+
+    def query(self, q,coll_name,n_res=1):
+        coll = self.client.get_collection(coll_name)
+        results = coll.query(
+            query_texts=q,  # Chroma will embed this for you
+            n_results=n_res  # how many results to return
+        )
+
+        return results
 
 
 if __name__ == "__main__":
-    db= DB_connector()
+    db = DB_connector()
+    db.reset_db()
+    data=["some data", "different type of data"]
+    metadatas = [{"source": "s1"}, {"source": "s2"}]
+
+    db.add_to_collection("test_coll",data,metadatas)
+    print(db.query(["some different data"],"test_coll"))
+    db.add_to_collection("test_coll",data,metadatas)

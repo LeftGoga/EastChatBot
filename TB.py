@@ -28,7 +28,7 @@ def get_text_messages(message):
     text_ans = con.make_requests(ans, 'ja', 'ru')
     print(text_ans)
     print("texts_ans")
-    gpt_connector = GPT_connector('AQVNyrGYKFnMnwXWjsSQkylmRXPNo4jhc9gmGzc9', text_ans, 'b1gsm96j2ptjrhcubqu4')
+    gpt_connector = GPT_connector('AQVNyrGYKFnMnwXWjsSQkylmRXPNo4jhc9gmGzc9', text_ans, 'b1gsm96j2ptjrhcubqu4')#вот тут надо вмесето text ans как то получить объект ретривер
     gpt_recon = gpt_connector.make_requests(message.text)
     print(gpt_recon)
     bot.send_message(message.from_user.id, gpt_recon)

@@ -65,8 +65,8 @@ if __name__ == "__main__":
     vectorstore = Chroma.from_documents(splits, embedding_function)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 1})
 
-    folder = "b1gsm96j2ptjrhcubqu4"
-    API = "AQVNyrGYKFnMnwXWjsSQkylmRXPNo4jhc9gmGzc9"
+    folder = "<FOLDER_ID>"
+    API = "<API_KEY>"
     req="В каком году стали ставить компьютеры"
     conn = GPT_connector(API,retriever,folder)
     print(conn.make_requests(req))

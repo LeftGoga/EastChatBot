@@ -52,6 +52,7 @@ class DB_connector:
         flag = True
         try:
             coll = self.client.get_or_create_collection(collection_name)
+            print(self.client.list_collections())
             check = coll.query(query_texts=text, n_results = 1)
             print(check)
             if check["distances"][0]!=[]:
@@ -78,7 +79,8 @@ class DB_connector:
         )
 
         return results
-
+    def list_collections(self):
+        self.client.list_collections()
 
 if __name__ == "__main__":
     db = DB_connector()
@@ -89,3 +91,4 @@ if __name__ == "__main__":
     db.add_to_collection("test_coll",data,metadatas)
     print(db.query(["some different data"],"test_coll"))
     db.add_to_collection("test_coll",data,metadatas)
+    print(db.client.list_collections())

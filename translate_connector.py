@@ -9,7 +9,7 @@ class connector:
         self.return_list=[]
 
 
-    def make_requests(self,tran_list:list, lang:str="ja"):
+    def make_requests(self,tran_list:list, lang_from:str="ru", lang_to = "ja"):
         """
         Сам реквест
         :param tran_list:
@@ -69,7 +69,7 @@ class connector:
                         break
 
             #сам запрос к API
-            response = self.__call_api({"sourceLanguageCode": lang,"targetLanguageCode" : "ru","texts" : temp_list})['translations']
+            response = self.__call_api({"sourceLanguageCode": lang_from,"targetLanguageCode" : lang_to,"texts" : temp_list})['translations']
 
             #Добавление запроса в общий список
             self.return_list.append([x["text"] for x in response])

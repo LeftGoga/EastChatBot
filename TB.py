@@ -5,8 +5,8 @@ from translate_connector import connector
 from DB import DB_connector
 from GPT_connector import GPT_connector
 
-bot = telebot.TeleBot('7281361012:AAGTlHUgS53joaRVMzWASv-txLX1U_KZ1RM')
-con = connector('AQVNyrGYKFnMnwXWjsSQkylmRXPNo4jhc9gmGzc9', "https://translate.api.cloud.yandex.net/translate/v2/translate")
+bot = telebot.TeleBot('<TG_Token>')
+con = connector('<API_KEY>', "https://translate.api.cloud.yandex.net/translate/v2/translate")
 db = DB_connector()
 
 print(db.list_collections())
@@ -24,7 +24,7 @@ def get_text_messages(message):
     print("ans")
     text_ans = con.make_requests(ans, 'ja', 'ru')
     print("texts_ans")
-    gpt_connector = GPT_connector('AQVNyrGYKFnMnwXWjsSQkylmRXPNo4jhc9gmGzc9', text_ans, 'b1gsm96j2ptjrhcubqu4')
+    gpt_connector = GPT_connector('<API_KEY>', text_ans, '<FOLDER_ID>')
     gpt_recon = gpt_connector.make_requests(message.text)
     print(gpt_recon)
     bot.send_message(message.from_user.id, gpt_recon)

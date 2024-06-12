@@ -95,7 +95,7 @@ class connector:
 
 
 if __name__ == "__main__":
-    con = connector('AQVNyrGYKFnMnwXWjsSQkylmRXPNo4jhc9gmGzc9',
+    con = connector('<API>',
                     "https://translate.api.cloud.yandex.net/translate/v2/translate")
     text = ["Что нибудь"]
     print(con.make_requests(text, 'ru', 'ja'))

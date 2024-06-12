@@ -38,6 +38,10 @@ class DB_connector:
     def reset_db(self):
         self.client.reset()
 
+    def create_coll(self, coll_name):
+
+        self.client.create_colletion(coll_name)
+
     def add_to_collection(self,collection_name,text,metadata=None, checking=True, dup_dist=1):
 
         """

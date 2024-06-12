@@ -92,3 +92,10 @@ class connector:
 
         headers = {"Authorization": f"Api-Key {self.api_key}"}
         return requests.post(self.url, json=data, headers=headers).json()
+
+
+if __name__ == "__main__":
+    con = connector('AQVNyrGYKFnMnwXWjsSQkylmRXPNo4jhc9gmGzc9',
+                    "https://translate.api.cloud.yandex.net/translate/v2/translate")
+    text = ["Что нибудь"]
+    print(con.make_requests(text, 'ru', 'ja'))

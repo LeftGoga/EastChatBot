@@ -52,6 +52,4 @@ if __name__ == "__main__":
     context = "компьютеры стали ставить в 2016 году"
     conn = GPT_connector(API,req, context, folder)
 
-
-
     print(conn.make_requests())

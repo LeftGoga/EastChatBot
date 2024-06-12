@@ -18,7 +18,6 @@ def get_text_messages(message):
         bot.send_message(message.from_user.id, f"Yo!")
         return
 
-
     print(message.text)
     print('Translating')
     text_ru = con.make_requests([message.text], 'ru', 'ja')

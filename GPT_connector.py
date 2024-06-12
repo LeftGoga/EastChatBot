@@ -46,8 +46,8 @@ class GPT_connector:
 if __name__ == "__main__":
 
 
-    folder = "b1gsm96j2ptjrhcubqu4"
-    API = "AQVNyrGYKFnMnwXWjsSQkylmRXPNo4jhc9gmGzc9"
+    folder = 
+    API = 
     req="В каком году стали ставить компьютеры"
     context = "компьютеры стали ставить в 2016 году"
     conn = GPT_connector(API,req, context, folder)

@@ -41,5 +41,5 @@ def get_text_messages(message):
     print(gpt_recon)
     bot.send_message(message.from_user.id, gpt_recon)
 
-    
+
 bot.polling(non_stop=True, interval=2)

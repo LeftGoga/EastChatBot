@@ -31,6 +31,7 @@ class GPT_connector:
 
     def make_requests(self):
 
+
         res = self.gpt.invoke(self.gpt.instruction_text)
 
         return res

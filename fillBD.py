@@ -146,6 +146,7 @@ if __name__ == '__main__':
 
     test = YaDisk(cache=False, use_cached_list=True)
     db = DB_connector()
+
     db.reset_db()
     f = open(r'C:\Users\leftg\PycharmProjects\hackaton\cache\list_all.json')
     all_data = json.load(f)

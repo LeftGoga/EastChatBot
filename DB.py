@@ -42,7 +42,7 @@ class DB_connector:
 
         self.client.create_colletion(coll_name)
 
-    def add_to_collection(self,collection_name,text,metadata=None, checking=True, dup_dist=1):
+    def add_to_collection(self,collection_name,ids,text,metadata=None, checking=True, dup_dist=1):
 
         """
         Добавление в коллекцию. Есть чек на дубли
@@ -52,7 +52,6 @@ class DB_connector:
         :param checking:
         :return:
         """
-        ids= [str(x) for x in range(len(text))]
         flag = True
         try:
             coll = self.client.get_or_create_collection(collection_name)
@@ -96,3 +95,4 @@ if __name__ == "__main__":
     print(db.query(["some different data"],"test_coll"))
     db.add_to_collection("test_coll",data,metadatas)
     print(db.client.list_collections())
+    print(db.query(coll_name ="test_coll",q="some data")["metadatas"][0][0])
